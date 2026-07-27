@@ -1,0 +1,41 @@
+name: Build Rublox
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MinGW
+        uses: egor-tensin/setup-mingw@v2
+        with:
+          version: 16.1.0posix-14.0.0-ucrt-r3
+
+      - name: Build
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G "MinGW Makefiles"
+          mingw32-make
+
+      - name: Prepare archive
+        shell: bash
+        run: |
+          mkdir Rublox
+          cp build/Rublox.exe Rublox/ 2>/dev/null || cp build/Debug/Rublox.exe Rublox/ || cp build/Release/Rublox.exe Rublox/
+          cp menu.lua Rublox/
+          cp -r Games Rublox/Games
+          find /c/mingw64/bin/ -name "*.dll" -exec cp {} Rublox/ \;
+          7z a Rublox.zip Rublox/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rublox
+          path: Rublox.zip
