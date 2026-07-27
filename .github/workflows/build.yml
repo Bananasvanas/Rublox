@@ -1,5 +1,4 @@
 name: Build Rublox
-
 on:
   push:
     branches: [ main ]
@@ -8,14 +7,13 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup MinGW
         uses: egor-tensin/setup-mingw@v2
         with:
-          version: 16.1.0posix-14.0.0-ucrt-r3
+          version: "13.1.0"   # проверенная стабильная версия
 
       - name: Build
         run: |
@@ -24,18 +22,17 @@ jobs:
           cmake .. -G "MinGW Makefiles"
           mingw32-make
 
-      - name: Prepare archive
-        shell: bash
+      - name: Prepare final package
+        shell: cmd
         run: |
           mkdir Rublox
-          cp build/Rublox.exe Rublox/ 2>/dev/null || cp build/Debug/Rublox.exe Rublox/ || cp build/Release/Rublox.exe Rublox/
-          cp menu.lua Rublox/
-          cp -r Games Rublox/Games
-          find /c/mingw64/bin/ -name "*.dll" -exec cp {} Rublox/ \;
-          7z a Rublox.zip Rublox/
+          copy build\Rublox.exe Rublox\ 2>nul || copy build\Debug\Rublox.exe Rublox\ || copy build\Release\Rublox.exe Rublox\
+          copy menu.lua Rublox\
+          xcopy /E /I Games Rublox\Games
+          copy "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin\*.dll" Rublox\
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: Rublox
-          path: Rublox.zip
+          path: Rublox\
